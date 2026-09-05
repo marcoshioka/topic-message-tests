@@ -132,6 +132,26 @@ tests/
   dashboard.spec.ts    UI: envio, status ao vivo, request/response
 ```
 
+## CI
+
+`.github/workflows/ci.yml` roda a suite inteira a cada push na `main`, em todo
+pull request e sob demanda (`workflow_dispatch`).
+
+O workflow sobe o **mesmo `docker-compose.yml`** do desenvolvimento, em vez de
+declarar o emulador como service container do Actions. Motivo: service container
+nao deixa sobrescrever o `command`, e a imagem precisa do
+`gcloud beta emulators pubsub start`. Reusar o compose mantem uma fonte de
+verdade so - se o lab sobe na sua maquina, sobe no CI.
+
+O `npm run lab:up` usa `docker compose up -d --wait`, que segura ate o
+healthcheck do emulador passar. Os testes nunca comecam antes do broker estar
+de pe. Publisher, Consumer e dashboard sobem sozinhos pelo `webServer` do
+Playwright.
+
+Em caso de falha, o run publica o `playwright-report/` como artifact e imprime
+o log do emulador - o suficiente para separar "o teste falhou" de "o broker
+nao subiu".
+
 ## Decisoes que importam para automacao
 
 **correlationId em tudo.** Sem ele, um teste consome a resposta de outra execucao

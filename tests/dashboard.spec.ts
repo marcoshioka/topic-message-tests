@@ -13,14 +13,26 @@ async function sendMessage(
   action: string,
   payload: Record<string, unknown>,
 ): Promise<string> {
+  const id = page.getByTestId("detail-correlation-id");
+
+  // Do segundo envio em diante o painel ja esta visivel com a mensagem
+  // anterior. Esperar por "visivel" nao esperaria nada e devolveria o id
+  // velho, entao a espera e pelo id MUDAR.
+  const previous = (await id.count()) > 0 ? (await id.innerText()).trim() : null;
+
   await page.getByTestId("action-input").fill(action);
   await page.getByTestId("payload-input").fill(JSON.stringify(payload, null, 2));
   await page.getByTestId("send-button").click();
 
-  const detail = page.getByTestId("detail-panel");
-  await expect(detail).toBeVisible();
+  await expect(page.getByTestId("detail-panel")).toBeVisible();
 
-  return (await page.getByTestId("detail-correlation-id").innerText()).trim();
+  if (previous) {
+    await expect(id).not.toHaveText(previous);
+  } else {
+    await expect(id).toHaveText(/^[0-9a-f-]{36}$/);
+  }
+
+  return (await id.innerText()).trim();
 }
 
 function detailStatus(page: Page) {
