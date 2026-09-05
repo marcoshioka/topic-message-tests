@@ -14,7 +14,9 @@ export default defineConfig({
   expect: { timeout: 10_000 },
 
   use: {
-    baseURL: `http://localhost:${config.ports.publisher}`,
+    // baseURL aponta para o dashboard: os testes de API usam URL absoluta
+    // via helper, entao so os testes de UI dependem disso.
+    baseURL: `http://localhost:${config.ports.dashboard}`,
     trace: "retain-on-failure",
   },
 
@@ -32,6 +34,14 @@ export default defineConfig({
     {
       command: "npm run consumer",
       url: `http://localhost:${config.ports.consumer}/health`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+    {
+      command: "npm run dashboard",
+      url: `http://localhost:${config.ports.dashboard}`,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
       stdout: "pipe",

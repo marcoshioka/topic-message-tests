@@ -4,6 +4,10 @@ import { config } from "./config.js";
 /** gRPC status code de ALREADY_EXISTS. */
 const ALREADY_EXISTS = 6;
 
+// O client so fala com o emulador se essa env existir. Fica aqui, e nao no
+// config, para importar config nao ter efeito colateral (o vite.config le ele).
+process.env.PUBSUB_EMULATOR_HOST = config.emulatorHost;
+
 export const pubsub = new PubSub({ projectId: config.projectId });
 
 function isAlreadyExists(error: unknown): boolean {
