@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Um push novo na mesma branch cancela o run anterior: nao adianta gastar
+# runner terminando um CI que ja esta desatualizado.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Testes de integracao e UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+
+      # Sobe o mesmo compose do desenvolvimento. O --wait segura ate o
+      # healthcheck do emulador passar, entao os testes nunca comecam antes.
+      - name: Subir o emulador do Pub/Sub
+        run: npm run lab:up
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # O Playwright sobe Publisher, Consumer e dashboard sozinho (webServer).
+      - name: Rodar os testes
+        run: npm test
+
+      - name: Publicar o report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      # Log do emulador so quando algo quebra: ajuda a separar
+      # "o teste falhou" de "o broker nao subiu".
+      - name: Log do emulador em caso de falha
+        if: failure()
+        run: docker compose logs --no-color

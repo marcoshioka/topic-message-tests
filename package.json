@@ -5,7 +5,7 @@
   "description": "Laboratorio de automacao de testes para fluxos assincronos com Google Cloud Pub/Sub",
   "type": "module",
   "scripts": {
-    "lab:up": "docker compose up -d",
+    "lab:up": "docker compose up -d --wait",
     "lab:down": "docker compose down -v",
     "lab:logs": "docker compose logs -f",
     "publisher": "tsx src/publisher/index.ts",
