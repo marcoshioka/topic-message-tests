@@ -1,7 +1,11 @@
+# Nome de projeto fixo: o lab e o mesmo container venha voce do checkout
+# principal ou de um worktree. Sem isso o Compose cria um projeto por
+# diretorio e os containers colidem na porta 8085.
+name: pubsub-lab
+
 services:
   pubsub-emulator:
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
-    container_name: pubsub-emulator
     command: >
       gcloud beta emulators pubsub start
       --project=pubsub-lab
