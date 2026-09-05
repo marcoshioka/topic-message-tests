@@ -10,21 +10,28 @@
     "lab:logs": "docker compose logs -f",
     "publisher": "tsx src/publisher/index.ts",
     "consumer": "tsx src/consumer/index.ts",
-    "dev": "npm run lab:up && concurrently -n publisher,consumer -c cyan,magenta \"npm:publisher\" \"npm:consumer\"",
+    "dashboard": "vite web",
+    "dev": "npm run lab:up && concurrently -n publisher,consumer,dashboard -c cyan,magenta,green \"npm:publisher\" \"npm:consumer\" \"npm:dashboard\"",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p web"
   },
   "dependencies": {
     "@google-cloud/pubsub": "^4.9.0",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.5",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.1.2",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vite": "^6.4.3"
   }
 }

@@ -24,11 +24,9 @@ export const config = {
   ports: {
     publisher: Number(process.env.PUBLISHER_PORT ?? 3000),
     consumer: Number(process.env.CONSUMER_PORT ?? 3001),
+    dashboard: Number(process.env.DASHBOARD_PORT ?? 5173),
   },
 
   /** tempo simulado de processamento no Consumer */
   processingDelayMs: Number(process.env.PROCESSING_DELAY_MS ?? 1500),
 } as const;
-
-/** O client do Pub/Sub so fala com o emulador se essa env existir. */
-process.env.PUBSUB_EMULATOR_HOST = config.emulatorHost;

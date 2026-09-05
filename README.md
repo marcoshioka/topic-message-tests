@@ -1,15 +1,18 @@
 # Pub/Sub Automation Lab
 
 Laboratorio para testar fluxos assincronos de Pub/Sub sem depender do sistema real.
-Roda 100% local: emulador do Google Cloud Pub/Sub no Docker + dois servicos Node + testes Playwright.
+Roda 100% local: emulador do Google Cloud Pub/Sub no Docker, dois servicos Node,
+um dashboard React e testes Playwright de integracao e de UI.
 
 ## Arquitetura
 
 ```
-Playwright
-    |
-    | POST /messages            (202 + correlationId)
-    v
+Dashboard (:5173)   Playwright
+        |               |
+        +-------+-------+
+                |
+                | POST /messages    (202 + correlationId)
+                v
 Publisher API (:3000) ------> requests-topic
                                     |
                                     v
@@ -60,15 +63,24 @@ ou de projeto GCP real.
 npm test
 ```
 
-O Playwright sobe o Publisher e o Consumer sozinho (`webServer` no
+O Playwright sobe Publisher, Consumer e dashboard sozinho (`webServer` no
 `playwright.config.ts`) e derruba no final. Topicos e subscriptions sao criados
 de forma idempotente no boot de cada servico, entao ordem de subida nao importa.
 
-### 4. Brincar na mao (opcional)
+### 4. Abrir o dashboard
 
 ```bash
 npm run dev
 ```
+
+Sobe emulador, Publisher, Consumer e o dashboard em <http://localhost:5173>.
+
+E um "Postman para Pub/Sub": voce escolhe a `action`, escreve o payload,
+clica em SEND MESSAGE e acompanha o `correlationId` sair de `ACCEPTED` para
+`SUCCESS`/`FAILED` sozinho, com REQUEST e RESPONSE lado a lado e o tempo real
+do round trip em ms.
+
+### 5. Ou na mao, via curl
 
 ```bash
 curl -X POST http://localhost:3000/messages -H 'content-type: application/json' -d '{"action":"PROCESS_ORDER","payload":{"orderId":"1001"}}'
@@ -86,7 +98,7 @@ Consulte o desfecho:
 curl http://localhost:3000/messages/39fa1425-...
 ```
 
-### 5. Derrubar
+### 6. Derrubar
 
 ```bash
 npm run lab:down
@@ -105,12 +117,19 @@ src/
     store.ts           estado em memoria (troque por banco na fase 2)
   consumer/
     index.ts           consome requests-topic, processa, publica em results-topic
+web/
+  vite.config.ts       proxy /api -> Publisher API (sem CORS)
+  src/
+    App.tsx            polling de 1s ate o status final
+    api.ts             cliente da Publisher API
+    components/        formulario, lista e detalhe request/response
 tests/
   helpers/
     publishMessage.ts  publica via API ou direto no topico
     resultCollector.ts espera a resposta por correlationId
     waitForRecord.ts   polling no GET /messages/:correlationId
-  pubsub.spec.ts
+  pubsub.spec.ts       integracao: Pub/Sub e API
+  dashboard.spec.ts    UI: envio, status ao vivo, request/response
 ```
 
 ## Decisoes que importam para automacao
@@ -145,9 +164,20 @@ malformado leva `ack` para nao virar loop infinito.
 - API: 202 no aceite, 400 sem `action`, 404 em `correlationId` desconhecido
 - evolucao de estado `ACCEPTED` -> `SUCCESS` via API
 
+No dashboard:
+
+- envio pela tela e status chegando a `SUCCESS` sozinho, sem reload
+- falha de negocio com o motivo visivel no painel de RESPONSE
+- round trip exibido em ms reais
+- payload com JSON invalido barrado antes de chamar a API
+- selecao pela lista abrindo o detalhe correto
+
 ## Proximos passos
 
-- **Fase 2:** trocar o store em memoria por Postgres/Redis, adicionar dead letter
-  topic, retry com backoff e testes de reprocessamento.
-- **Fase 3:** dashboard web (React) para enviar mensagem, acompanhar o status e
-  ver request/response lado a lado - um "Postman para Pub/Sub".
+- **Fase 2 (pulada, fica pendente):** trocar o store em memoria por
+  Postgres/Redis, adicionar dead letter topic, retry com backoff e testes de
+  reprocessamento. Enquanto o store for em memoria, reiniciar o Publisher zera
+  o historico do dashboard.
+- **Streaming no lugar do polling:** o dashboard faz polling de 1s no
+  `GET /messages`. Com SSE ou WebSocket a tela reagiria no instante em que o
+  resultado cai no `results-topic`.
