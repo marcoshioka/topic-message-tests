@@ -1,0 +1,30 @@
+{
+  "name": "pubsub-automation-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Laboratorio de automacao de testes para fluxos assincronos com Google Cloud Pub/Sub",
+  "type": "module",
+  "scripts": {
+    "lab:up": "docker compose up -d",
+    "lab:down": "docker compose down -v",
+    "lab:logs": "docker compose logs -f",
+    "publisher": "tsx src/publisher/index.ts",
+    "consumer": "tsx src/consumer/index.ts",
+    "dev": "npm run lab:up && concurrently -n publisher,consumer -c cyan,magenta \"npm:publisher\" \"npm:consumer\"",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "^4.9.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "concurrently": "^9.1.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
